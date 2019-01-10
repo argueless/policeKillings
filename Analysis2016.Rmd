@@ -1,0 +1,111 @@
+---
+title: "Police Killings 2015/2016"
+author: "Dylan Arguelles"
+date: "1/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#library(ggplot2)
+#library(dplyr)
+#library(maps)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+the_counted_2016 <- read_csv("~/Desktop/popo/policeKillings/data/the-counted-2016.csv")
+
+```
+
+
+## Killings by State
+
+```{r, echo=FALSE}
+# TODO normalize by population and check frequency
+
+#frequency per state
+killstates <- data.frame(count(the_counted_2016,state))
+killstates$state <-state.name[match(killstates$state,state.abb)]
+killstates$region <- tolower(killstates$state)
+states <- map_data("state")
+
+#combine killings & map data frame
+map.df <- merge(states,killstates, by="region", all.x=T)
+map.df <- map.df[order(map.df$order),]
+
+#plot heatmap of US for killings per state
+ggplot(map.df, aes(x=long,y=lat,group=group))+
+  geom_polygon(aes(fill=n))+
+  geom_path()+ 
+  scale_fill_gradientn(colours=rev(heat.colors(10)),na.value="grey90")+
+  coord_map()+
+  labs(title = "Killings by State", fill = "Count")+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+```
+
+
+
+
+## Are Races Targeted?
+```{r, echo=FALSE}
+# TODO compare with total population percentages
+
+#plot bar graph 
+ggplot(the_counted_2016, aes(x=raceethnicity, color=raceethnicity))+
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  labs(title = "Killings by Race/Ethnicity",
+       x = "Race/Ethnicity",
+       y = "Number of Killings")
+
+```
+
+
+## Gender Roles
+# Victims are overwhelmingly male
+```{r, echo=FALSE}
+#format data
+g <- data.frame(count(the_counted_2016,gender))
+g$p <- scales::percent(g$n/sum(g$n))
+
+#plot pie chart
+ggplot(g, aes(x="", y= n, fill=gender))+
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar("y", start = 0)+
+  theme_void()+
+  theme(axis.text.x=element_blank())+
+  geom_text(aes(x=1, y = cumsum(n) - n/2, label=p))+
+  labs(title = "Killings by Gender")
+
+
+
+```
+
+## What Time of the Year is the Most Deadly
+# There doesn't appear to be a trend with the seasons
+```{r, echo=FALSE}
+ggplot(the_counted_2016, aes(x=factor(the_counted_2016$month, levels = month.name), 
+  color=month))+
+  geom_bar()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, hjust = 1))+
+  labs(title = "Killings by Month",
+       x = "Month",
+       y = "Number of Killings")
+
+
+```
