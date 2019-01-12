@@ -1,33 +1,31 @@
 ---
-title: "Police Killings 2015/2016"
+title: "Fatal Police Victims of 2016"
 author: "Dylan Arguelles"
-date: "1/9/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+```{r, echo=FALSE}
 #library(ggplot2)
 #library(dplyr)
 #library(maps)
 ```
+## 1,093 People were killed by Police in 2016. 92.5% by gunshot. Here is an analysis of the victims.
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r}
+```{r,echo=FALSE, message=FALSE}
+library(readr)
 the_counted_2016 <- read_csv("~/Desktop/popo/policeKillings/data/the-counted-2016.csv")
 
 ```
 
 
-## Killings by State
+## What State has the Most Deadly Police
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(maps)
+library(mapproj)
 # TODO normalize by population and check frequency
 
 #frequency per state
@@ -61,7 +59,9 @@ ggplot(map.df, aes(x=long,y=lat,group=group))+
 
 
 ## Are Races Targeted?
-```{r, echo=FALSE}
+
+# 24.3% of victims are black compared to 12.6% of the total US population
+```{r, echo=FALSE, results='hide',fig.keep='all'}
 # TODO compare with total population percentages
 
 #plot bar graph 
@@ -75,9 +75,25 @@ ggplot(the_counted_2016, aes(x=raceethnicity, color=raceethnicity))+
 ```
 
 
+## How Old are the Victims
+
+# Most victims are young to middle aged adults.
+# 19 minors were killed.
+```{r, echo=FALSE, warning=FALSE}
+#format data
+the_counted_2016$ageRange <- cut(as.numeric(the_counted_2016$age), breaks=c(0,25,40,60,100), labels=c("<=25","26-40","41-60",">60"))
+
+
+#plot bar graph
+ggplot(the_counted_2016, aes(x=ageRange)) + geom_bar(fill="steelblue")
+
+
+```
+
 ## Gender Roles
+
 # Victims are overwhelmingly male
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 #format data
 g <- data.frame(count(the_counted_2016,gender))
 g$p <- scales::percent(g$n/sum(g$n))
@@ -96,8 +112,9 @@ ggplot(g, aes(x="", y= n, fill=gender))+
 ```
 
 ## What Time of the Year is the Most Deadly
+
 # There doesn't appear to be a trend with the seasons
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 ggplot(the_counted_2016, aes(x=factor(the_counted_2016$month, levels = month.name), 
   color=month))+
   geom_bar()+
